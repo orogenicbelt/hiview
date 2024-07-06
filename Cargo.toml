@@ -3,11 +3,15 @@ name = "hiview"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-crossterm = "0.27.0"
-hashbrown = "0.14.3"
+crossterm = { version = "0.27.0", features = ["event-stream"] }
+futures = "0.3.30"
+hxdmp = "0.2.1"
+itertools = "0.13.0"
+lazy_static = "1.5.0"
 lru = "0.12.3"
 notatin = "1.0.1"
-ratatui = "0.26.1"
+ratatui = "0.27.0"
+strum = { version = "0.26.3", features = ["derive"] }
+strum_macros = "0.26.4"
+tokio = { version = "1.35.1", features = ["full"] }

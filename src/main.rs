@@ -1,19 +1,40 @@
+use hiview::app::{App, AppResult};
+use hiview::event::{Event, EventHandler};
+use hiview::handler::handle_key_events;
+use hiview::tui::Tui;
+use notatin::parser_builder::ParserBuilder;
+use ratatui::backend::CrosstermBackend;
+use ratatui::Terminal;
+use std::env::args;
 use std::io;
 
-use hiview::key_selector::RegistryKeySelectorWidget;
-use hiview::tui;
+#[tokio::main]
+async fn main() -> AppResult<()> {
+    // Create an application.
+    let parser = ParserBuilder::from_path(args().collect::<Vec<String>>()[1].clone()).build();
+    let mut app = App::new(parser.expect("The hive to parse correctly"));
 
-fn main() -> io::Result<()> {
-    let args = std::env::args().collect::<Vec<String>>();
+    // Initialize the terminal user interface.
+    let backend = CrosstermBackend::new(io::stderr());
+    let terminal = Terminal::new(backend)?;
+    let events = EventHandler::new(250);
+    let mut tui = Tui::new(terminal, events);
+    tui.init()?;
 
-    let path = args
-        .get(1)
-        .expect("Must supply path to registry hive")
-        .clone();
+    // Start the main loop.
+    while app.running {
+        // Render the user interface.
+        tui.draw(&mut app)?;
+        // Handle events.
+        match tui.events.next().await? {
+            Event::Tick => app.tick(),
+            Event::Key(key_event) => handle_key_events(key_event, &mut app)?,
+            Event::Mouse(_) => {}
+            Event::Resize(_, _) => {}
+        }
+    }
 
-    let mut terminal = tui::init()?;
-    let app_result = RegistryKeySelectorWidget::new(&path).run(&mut terminal);
-
-    tui::restore()?;
-    app_result
+    // Exit the user interface.
+    tui.exit()?;
+    Ok(())
 }
