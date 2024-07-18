@@ -10,7 +10,7 @@ on:
       - main
 
 jobs:
-  check-build-validity:
+  compile:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,5 +22,5 @@ jobs:
           profile: minimal
           toolchain: stable
 
-      - name: Build
-        run: cargo build --all-targets
+      - name: Check compilation
+        run: cargo check --all-targets
