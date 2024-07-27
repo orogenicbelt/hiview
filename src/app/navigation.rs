@@ -97,10 +97,8 @@ impl Navigation {
     }
 
     pub fn leave_key(&mut self) {
-        if let Ok(parent_key) = self.parser.get_parent_key(&mut self.current_key) {
-            if let Some(key) = parent_key {
-                self.select_key(key.clone());
-            }
+        if let Ok(Some(parent_key)) = self.parser.get_parent_key(&mut self.current_key) {
+            self.select_key(parent_key.clone());
         }
     }
 
@@ -151,8 +149,7 @@ impl Navigation {
             self.current_key
                 .cell_sub_key_offsets_absolute
                 .len()
-                .checked_sub(1)
-                .unwrap_or(0),
+                .saturating_sub(1),
         );
 
         self.table_states.key_selector_state.select(Some(new_index));
@@ -170,7 +167,7 @@ impl Navigation {
         if let Some(subkey) = &self.selected_subkey {
             let new_index = std::cmp::min(
                 std::cmp::max(0, index as isize + n_keys) as usize,
-                subkey.value_iter().count().checked_sub(1).unwrap_or(0),
+                subkey.value_iter().count().saturating_sub(1),
             );
             self.table_states
                 .value_selector_state
