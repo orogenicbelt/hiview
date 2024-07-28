@@ -1,4 +1,6 @@
 use std::num::NonZero;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 use lru::LruCache;
 use notatin::cell_key_node::CellKeyNode;
@@ -19,6 +21,15 @@ pub struct Navigation {
     pub table_states: CurrentKeyState,
     pub key_state_cache: LruCache<usize, TableState>,
     pub value_state_cache: LruCache<usize, TableState>,
+    pub key_sort_method: KeySort,
+}
+
+#[derive(Copy, Clone, Default, Debug, EnumIter, PartialEq, Eq, PartialOrd, Ord)]
+pub enum KeySort {
+    #[default]
+    SubkeyCount = 0,
+    KeyName = 1,
+    LastWrite = 2,
 }
 
 impl Navigation {
@@ -38,6 +49,7 @@ impl Navigation {
             selected_value: None,
             key_state_cache: LruCache::new(NonZero::new(200).unwrap()),
             value_state_cache: LruCache::new(NonZero::new(200).unwrap()),
+            key_sort_method: KeySort::default(),
         }
         .with_selected_key(current_key.clone())
     }
@@ -45,6 +57,33 @@ impl Navigation {
     pub fn with_selected_key(mut self, key: CellKeyNode) -> Self {
         self.select_key(key);
         self
+    }
+
+    pub fn sort_subkeys(&mut self, sort_type: KeySort) {
+        match sort_type {
+            KeySort::LastWrite => self
+                .current_subkeys
+                .sort_by_key(|key| key.last_key_written_date_and_time()),
+            KeySort::KeyName => self.current_subkeys.sort_by_key(|key| key.key_name.clone()),
+            KeySort::SubkeyCount => self
+                .current_subkeys
+                .sort_by_key(|key| key.detail.number_of_sub_keys()),
+        }
+        if let Some(ref sk) = self.selected_subkey {
+            let index = self.current_subkeys.iter().position(|key| *sk == *key);
+            self.table_states.key_selector_state.select(index)
+        }
+        self.key_sort_method = sort_type;
+    }
+
+    pub fn change_subkey_sort(&mut self) {
+        self.sort_subkeys(
+            KeySort::iter()
+                .cycle()
+                .skip_while(|sort| *sort != self.key_sort_method)
+                .nth(1)
+                .expect("There to be a continuous iterator"),
+        )
     }
 
     pub fn select_key(&mut self, key: CellKeyNode) {

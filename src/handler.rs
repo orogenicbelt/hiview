@@ -51,6 +51,11 @@ pub fn handle_key_selector_key_events(key_event: KeyEvent, app: &mut App) -> App
                 app.state.navigation.change_subkey_by(-1)
             }
         }
+        KeyCode::Char('s') => {
+            if key_event.modifiers == KeyModifiers::CONTROL {
+                app.state.navigation.change_subkey_sort();
+            }
+        }
         _ => {}
     }
     Ok(())

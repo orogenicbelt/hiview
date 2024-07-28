@@ -1,3 +1,4 @@
+use crate::app::navigation::KeySort;
 use crate::app::state::{FocusedPane, State};
 use notatin::cell_key_node::CellKeyNode;
 use ratatui::layout::Constraint;
@@ -25,6 +26,7 @@ pub struct UIKey<'cell> {
 
 pub struct UIKeySet<'cell> {
     keys: Vec<&'cell CellKeyNode>,
+    sort_column: KeySort,
     focused: bool,
 }
 
@@ -59,6 +61,7 @@ fn make_table_block(focused: bool) -> Block<'static> {
 impl From<UIKeySet<'_>> for Table<'_> {
     fn from(value: UIKeySet<'_>) -> Self {
         let mut styles = [Style::default(); 3];
+        styles[value.sort_column as usize].bg = Some(Color::DarkGray);
 
         let rows = value
             .keys
@@ -122,6 +125,7 @@ impl StatefulWidget for &mut KeySelector {
         let table = Table::from(UIKeySet {
             keys: state.navigation.current_subkeys.iter().collect(),
             focused: state.focused_pane == FocusedPane::KeySelector,
+            sort_column: state.navigation.key_sort_method,
         });
 
         <Table as StatefulWidget>::render(
